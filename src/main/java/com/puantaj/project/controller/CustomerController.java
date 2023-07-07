@@ -22,6 +22,11 @@ public class CustomerController {
         this.customerService = customerService;
     }
 
+    @GetMapping
+    public List<Customer> getAllCustomer() {
+        return customerService.getAllCustomers();
+    }
+
     @GetMapping("/{guid}")
     public ResponseEntity<Customer> getCustomerByGuid(@PathVariable("guid") UUID guid) {
         Customer customer = customerService.getCustomerByGuid(guid);
