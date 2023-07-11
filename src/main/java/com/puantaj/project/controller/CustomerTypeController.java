@@ -15,12 +15,13 @@ import java.util.UUID;
 @RequestMapping("/customer-types")
 public class CustomerTypeController {
 
-    private final CustomerTypeService customerTypeService;
-
     @Autowired
-    public CustomerTypeController(CustomerTypeService customerTypeService) {
-        this.customerTypeService = customerTypeService;
-    }
+     CustomerTypeService customerTypeService;
+
+//    @Autowired
+//    public CustomerTypeController(CustomerTypeService customerTypeService) {
+//        this.customerTypeService = customerTypeService;
+//    }
 
     @GetMapping
     public List<CustomerType> getAllCustomerTypes() {

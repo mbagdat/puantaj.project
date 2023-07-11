@@ -17,10 +17,10 @@ public class CustomerController {
     @Autowired
     CustomerService customerService;
 
-    @Autowired
-    public CustomerController(CustomerService customerService) {
-        this.customerService = customerService;
-    }
+//    @Autowired
+//    public CustomerController(CustomerService customerService) {
+//        this.customerService = customerService;
+//    }
 
     @GetMapping
     public List<Customer> getAllCustomer() {

@@ -14,12 +14,13 @@ import java.util.UUID;
 @RequestMapping("/customer-card-types")
 
 public class CustomerCardTypeController {
-    private final CustomerCardTypeService customerCardTypeService;
-
     @Autowired
-    public CustomerCardTypeController(CustomerCardTypeService customerCardTypeService) {
-        this.customerCardTypeService = customerCardTypeService;
-    }
+     CustomerCardTypeService customerCardTypeService;
+
+//    @Autowired
+//    public CustomerCardTypeController(CustomerCardTypeService customerCardTypeService) {
+//        this.customerCardTypeService = customerCardTypeService;
+//    }
 
     @GetMapping
     public List<CustomerCardType> getAllCustomerCardTypes() {
