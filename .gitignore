@@ -3,6 +3,18 @@
 # Learn more about .gitignore:
 #     https://www.atlassian.com/git/tutorials/saving-changes/gitignore
 
+# Bu bir yorum satırıdır
+
+# Belirli bir dosya
+filename.txt
+
+# Belirli bir klasör
+folder/
+
+# Belirli bir desen
+*.log
+
+
 # Node artifact files
 node_modules/
 dist/
