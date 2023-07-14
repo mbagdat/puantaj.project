@@ -11,12 +11,10 @@ import java.util.UUID;
 
 @Service
 public class CustomerCardTypeServiceImpl implements CustomerCardTypeService{
-    private final CustomerCardTypeRepository customerCardTypeRepository;
 
     @Autowired
-    public CustomerCardTypeServiceImpl(CustomerCardTypeRepository customerCardTypeRepository) {
-        this.customerCardTypeRepository = customerCardTypeRepository;
-    }
+    CustomerCardTypeRepository customerCardTypeRepository;
+
 
     @Override
     public List<CustomerCardType> getAllCustomerCardTypes() {
