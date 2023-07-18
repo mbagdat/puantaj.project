@@ -32,9 +32,9 @@ public class TransportTypeServiceImpl implements TransportTypeService {
 
     @Override
     public TransportType updateTransportType(UUID guid, TransportType updatedTransportType) {
-        Optional<TransportType> existingCustomerType = transportTypeRepository.findById(guid);
-        if (existingCustomerType.isPresent()) {
-            TransportType transportType = existingCustomerType.get();
+        Optional<TransportType> existingTransportType = transportTypeRepository.findById(guid);
+        if (existingTransportType.isPresent()) {
+            TransportType transportType = existingTransportType.get();
             transportType.setTransportType(updatedTransportType.getTransportType());
             return transportTypeRepository.save(transportType);
         }

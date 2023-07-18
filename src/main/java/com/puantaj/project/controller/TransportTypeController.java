@@ -1,7 +1,6 @@
 package com.puantaj.project.controller;
 
 
-import com.puantaj.project.models.CustomerType;
 import com.puantaj.project.models.TransportType;
 import com.puantaj.project.service.TransportTypeService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,12 +18,12 @@ public class TransportTypeController {
     TransportTypeService transportTypeService;
 
     @GetMapping
-    public List<TransportType> getAllCustomerTypes() {
+    public List<TransportType> getAllTransportTypes() {
         return transportTypeService.getAllTransportTypes();
     }
 
     @GetMapping("/{guid}")
-    public ResponseEntity<TransportType> getCustomerTypeByGuid(@PathVariable UUID guid) {
+    public ResponseEntity<TransportType> getTransportTypeByGuid(@PathVariable UUID guid) {
         TransportType transportType = transportTypeService.getTransportTypeByGuid(guid);
         if (transportType != null) {
             return new ResponseEntity<>(transportType, HttpStatus.OK);

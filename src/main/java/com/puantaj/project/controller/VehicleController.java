@@ -1,6 +1,5 @@
 package com.puantaj.project.controller;
 
-import com.puantaj.project.models.Customer;
 import com.puantaj.project.models.Vehicle;
 import com.puantaj.project.service.VehicleService;
 import org.springframework.beans.factory.annotation.Autowired;

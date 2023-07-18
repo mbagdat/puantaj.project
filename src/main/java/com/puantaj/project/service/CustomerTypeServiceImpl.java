@@ -1,6 +1,5 @@
 package com.puantaj.project.service;
 
-import com.puantaj.project.models.CustomerCardType;
 import com.puantaj.project.models.CustomerType;
 import com.puantaj.project.repositories.CustomerTypeRepository;
 import org.springframework.beans.factory.annotation.Autowired;

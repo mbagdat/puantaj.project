@@ -18,10 +18,6 @@ public class CustomerTypeController {
     @Autowired
      CustomerTypeService customerTypeService;
 
-//    @Autowired
-//    public CustomerTypeController(CustomerTypeService customerTypeService) {
-//        this.customerTypeService = customerTypeService;
-//    }
 
     @GetMapping
     public List<CustomerType> getAllCustomerTypes() {
