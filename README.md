@@ -29,6 +29,7 @@ Bu proje, bir puantaj sistemi oluşturmak için kullanılan bir Java uygulaması
 - mvn test komutunu çalıştırın.
 
 5- Geliştiriciler
+
 - kzgn
 
 6- Projeyi geliştirmek için aşağıdaki adımları izleyin:
