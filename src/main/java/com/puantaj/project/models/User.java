@@ -38,8 +38,8 @@ public class User {
 
 //    private String verificationCode;
 
-//    @Column(name = "password_reset_token")
-//    private String passwordResetToken;
+    @Column(name = "password_reset_token")
+    private String passwordResetToken;
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
@@ -54,7 +54,7 @@ public class User {
         this.password = password;
 //        this.active = active;
 //        this.verificationCode = verificationCode;
-//        this.passwordResetToken = passwordResetToken;
+        this.passwordResetToken = passwordResetToken;
 
     }
 

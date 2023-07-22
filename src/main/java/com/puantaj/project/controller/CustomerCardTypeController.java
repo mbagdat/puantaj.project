@@ -17,11 +17,6 @@ public class CustomerCardTypeController {
     @Autowired
      CustomerCardTypeService customerCardTypeService;
 
-//    @Autowired
-//    public CustomerCardTypeController(CustomerCardTypeService customerCardTypeService) {
-//        this.customerCardTypeService = customerCardTypeService;
-//    }
-
     @GetMapping
     public List<CustomerCardType> getAllCustomerCardTypes() {
         return customerCardTypeService.getAllCustomerCardTypes();

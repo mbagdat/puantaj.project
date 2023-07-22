@@ -12,19 +12,24 @@ import com.puantaj.project.repositories.RoleRepository;
 import com.puantaj.project.repositories.UserRepository;
 import com.puantaj.project.security.jwt.JwtUtils;
 import com.puantaj.project.security.service.UserDetailsImpl;
+import com.puantaj.project.service.EmailService;
+import com.puantaj.project.tokenexception.InvalidTokenException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.IOException;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @CrossOrigin(origins = "*", maxAge = 3600)
@@ -46,6 +51,9 @@ public class AuthController {
 
     @Autowired
     JwtUtils jwtUtils;
+
+    @Autowired
+    private EmailService emailService;
 
 
     @PostMapping("/signin")
@@ -128,5 +136,96 @@ public class AuthController {
 
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }
+
+    @PostMapping("/password/reset")
+    public ResponseEntity<String> resetPassword(@RequestParam("email") String email,
+                                                HttpServletRequest request,
+                                                HttpServletResponse response) {
+        // Check if the user exists
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+
+        // Generate a password reset token
+        String token = UUID.randomUUID().toString();
+        user.setPasswordResetToken(token);
+        userRepository.save(user);
+
+        // Send an email with the password reset link
+        String resetUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + "/api/auth/password/reset/" + token;
+        emailService.sendPasswordResetEmail(user.getEmail(), resetUrl);
+//
+        // Return a success response
+        return ResponseEntity.ok("Password reset link sent to " + email);
+
+    }
+                       //ŞİFRE SIFIRLAMA FORMU AÇILIR VE YENİ ŞİFREYİ GİRMENİ SAĞLAR
+    @GetMapping("/password/reset/{token}")
+    public String showResetPasswordForm(@PathVariable("token") String token, Model model, HttpServletResponse response) throws InvalidTokenException, IOException {
+        // Check if the token is valid
+        User user = userRepository.findByPasswordResetToken(token);
+        if (user == null) {
+            throw new InvalidTokenException("Invalid password reset token");
+        }
+
+        // Redirect to the password reset page on the frontend
+        response.sendRedirect("http://localhost:8081/passwordreset?token=" + token);
+        return null;
+    }
+
+//            YENİ GİRDİĞİN ŞİFREYİ VERİTABANINA KAYDEDİP TOKEN'I SIFIRLLAR
+    @PostMapping("/password/reset/{token}")
+    public ResponseEntity<String> resetPassword(@PathVariable("token") String token,
+                                                @RequestBody Map<String, String> requestBody,
+                                                HttpServletRequest request,
+                                                HttpServletResponse response) throws InvalidTokenException {
+        // Check if the token is valid
+        User user = userRepository.findByPasswordResetToken(token);
+        if (user == null) {
+            throw new InvalidTokenException("Invalid password reset token");
+        }
+
+        // Update the user's password and clear the reset token
+        String newPassword = passwordEncoder.encode(requestBody.get("password"));
+        user.setPassword(newPassword);
+        user.setPasswordResetToken(null);
+        userRepository.save(user);
+
+        // Generate a new JWT token for the user
+        Authentication authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), newPassword);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String jwt = jwtUtils.generateJwtToken(authentication);
+
+        // Return a success response
+        return ResponseEntity.ok("Password reset successful");
+    }
+
+//    @PostMapping("/password/update")
+//    public ResponseEntity<String> updatePassword(@RequestBody Map<String, String> requestBody) {
+//        String email = requestBody.get("email");
+//        String newPassword = requestBody.get("newPassword");
+//
+//        // Check if the user exists and the token is valid
+//        User user = userRepository.findByEmail(email);
+//        if (user == null) {
+//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid email or token");
+//        }
+//
+//        // Validate the new password
+//        if (newPassword == null || newPassword.trim().isEmpty()) {
+//            return ResponseEntity.badRequest().body("New password cannot be empty.");
+//        }
+//
+//        String encodedPassword = passwordEncoder.encode(newPassword);
+//
+//        // Reset the password with the new password
+//        user.setPassword(encodedPassword);
+//        user.setPasswordResetToken(null);
+//        userRepository.save(user);
+//
+//        // Return a success response
+//        return ResponseEntity.ok("Password updated successfully for " + email);
+//    }
 
 }
