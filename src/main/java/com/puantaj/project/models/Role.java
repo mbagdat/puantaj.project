@@ -6,7 +6,6 @@ import lombok.Data;
 import javax.persistence.*;
 
 @Entity
-@Data
 @Table(name = "roles")
 public class Role {
     @Id
@@ -17,11 +16,36 @@ public class Role {
     @Column(length = 20)
     private ERole name;
 
-    public Role() {
+    @Column(name = "description")
+    private String description;
 
+    public Integer getId() {
+        return id;
     }
 
-    public Role(ERole name) {
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public ERole getName() {
+        return name;
+    }
+
+    public void setName(ERole name) {
         this.name = name;
     }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public static final String ROLE_USER = "ROLE_USER";
+    public static final String ROLE_MODERATOR = "ROLE_MODERATOR";
+    public static final String ROLE_ADMIN = "ROLE_ADMIN";
+
 }
+

@@ -1,5 +1,34 @@
-//package com.puantaj.project.service;
-//
+package com.puantaj.project.service;
+
+
+import com.puantaj.project.models.User;
+import com.puantaj.project.repositories.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+@Service
+public class UserService {
+    private final UserRepository userRepository;
+
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
+    public boolean existsByEmail(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    public User saveUser(User user) {
+        return userRepository.save(user);
+    }
+
+    public UserService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+    // Diğer metotlar ve işlevler...
+}
+
+
 //import com.puantaj.project.models.Role;
 //import com.puantaj.project.models.User;
 //import com.puantaj.project.repositories.RoleRepository;
