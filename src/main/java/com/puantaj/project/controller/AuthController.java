@@ -64,7 +64,6 @@ public class AuthController {
     RoleServiceImpl roleService;
 
 
-
     @PostMapping("/signin")
     public Object authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 
@@ -124,8 +123,7 @@ public class AuthController {
     }
 
 
-
-//    @PostMapping("/signup")
+    //    @PostMapping("/signup")
 //    public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
 //        if (userRepository.existsByUsername(signUpRequest.getUsername())) {
 //            return ResponseEntity
@@ -175,7 +173,7 @@ public class AuthController {
 //
 //        return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
 //    }
-
+    //FRON-END ÜZERİNDEN DOĞRULAMA LİNKİNİ BU KOD PARÇACIĞI GÖNDERİYOR
     @PostMapping("/password/reset")
     public ResponseEntity<String> resetPassword(@RequestParam("email") String email, HttpServletRequest request, HttpServletResponse response) {
         // Check if the user exists
@@ -185,18 +183,48 @@ public class AuthController {
         }
 
         // Generate a password reset token
+//        String token = UUID.randomUUID().toString();
+//        user.setPasswordResetToken(token);
+//        userRepository.save(user);
+        // Generate a password reset token
         String token = UUID.randomUUID().toString();
-        user.setPasswordResetToken(token);
+        String shortenedToken = token.substring(0, 1); // Token'ı ilk 8 karakterle temsil ediyoruz
+        user.setPasswordResetToken(shortenedToken);
         userRepository.save(user);
 
+
         // Send an email with the password reset link
-        String resetUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + "/api/auth/password/reset/" + token;
+        String resetUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + "/api/auth/password/reset/" + shortenedToken;
         emailService.sendPasswordResetEmail(user.getEmail(), resetUrl);
 //
         // Return a success response
         return ResponseEntity.ok("Password reset link sent to " + email);
 
     }
+    //POSTMAN ÜZERİNDEN DOĞRULAMA LİNKİNİ BU KOD PARÇACIĞI GÖNDERİYOR
+//    @PostMapping("/password/reset")
+//    public ResponseEntity<String> resetPassword(@RequestBody Map<String, String> requestBody, HttpServletRequest request, HttpServletResponse response) {
+//        String email = requestBody.get("email");
+//
+//        // Check if the user exists
+//        User user = userRepository.findByEmail(email);
+//        if (user == null) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+//        }
+//
+//        // Generate a password reset token
+//        String token = UUID.randomUUID().toString();
+//        user.setPasswordResetToken(token);
+//        userRepository.save(user);
+//
+//        // Send an email with the password reset link
+//        String resetUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + "/api/auth/password/reset/" + token;
+//        emailService.sendPasswordResetEmail(user.getEmail(), resetUrl);
+//
+//        // Return a success response
+//        return ResponseEntity.ok("Password reset link sent to " + email);
+//    }
+
 
     //ŞİFRE SIFIRLAMA FORMU AÇILIR VE YENİ ŞİFREYİ GİRMENİ SAĞLAR
     @GetMapping("/password/reset/{token}")
@@ -212,7 +240,6 @@ public class AuthController {
         return null;
     }
 
-    //            YENİ GİRDİĞİN ŞİFREYİ VERİTABANINA KAYDEDİP TOKEN'I SIFIRLLAR
     @PostMapping("/password/reset/{token}")
     public ResponseEntity<String> resetPassword(@PathVariable("token") String token, @RequestBody Map<String, String> requestBody, HttpServletRequest request, HttpServletResponse response) throws InvalidTokenException {
         // Check if the token is valid
@@ -222,19 +249,40 @@ public class AuthController {
         }
 
         // Update the user's password and clear the reset token
-        String newPassword = passwordEncoder.encode(requestBody.get("password"));
-        user.setPassword(newPassword);
+        String newPassword = requestBody.get("password");
+        // Hash the new password before saving it
+        String hashedPassword = passwordEncoder.encode(newPassword);
+        user.setPassword(hashedPassword);
         user.setPasswordResetToken(null);
         userRepository.save(user);
-
-        // Generate a new JWT token for the user
-        Authentication authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), newPassword);
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtUtils.generateJwtToken(authentication);
 
         // Return a success response
         return ResponseEntity.ok("Password reset successful");
     }
+
+    //            YENİ GİRDİĞİN ŞİFREYİ VERİTABANINA KAYDEDİP TOKEN'I SIFIRLLAR
+//    @PostMapping("/password/reset/{token}")
+//    public ResponseEntity<String> resetPassword(@PathVariable("token") String token, @RequestBody Map<String, String> requestBody, HttpServletRequest request, HttpServletResponse response) throws InvalidTokenException {
+//        // Check if the token is valid
+//        User user = userRepository.findByPasswordResetToken(token);
+//        if (user == null) {
+//            throw new InvalidTokenException("Invalid password reset token");
+//        }
+//
+//        // Update the user's password and clear the reset token
+//        String newPassword = passwordEncoder.encode(requestBody.get("password"));
+//        user.setPassword(newPassword);
+//        user.setPasswordResetToken(null);
+//        userRepository.save(user);
+//
+//        // Generate a new JWT token for the user
+//        Authentication authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), newPassword);
+//        SecurityContextHolder.getContext().setAuthentication(authentication);
+//        String jwt = jwtUtils.generateJwtToken(authentication);
+//
+//        // Return a success response
+//        return ResponseEntity.ok("Password reset successful");
+//    }
 
 //    @PostMapping("/password/update")
 //    public ResponseEntity<String> updatePassword(@RequestBody Map<String, String> requestBody) {
