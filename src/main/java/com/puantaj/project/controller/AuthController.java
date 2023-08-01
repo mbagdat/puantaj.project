@@ -64,8 +64,35 @@ public class AuthController {
     RoleServiceImpl roleService;
 
 
+//    @PostMapping("/signin")
+//    public Object authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+//
+//        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+//
+//        SecurityContextHolder.getContext().setAuthentication(authentication);
+//        String jwt = jwtUtils.generateJwtToken(authentication);
+//
+//        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+//        List<String> roles = userDetails.getAuthorities().stream().map(item -> item.getAuthority()).collect(Collectors.toList());
+//
+//
+////        if (!userDetails.isActive()) { // kullanıcı aktif değilse
+////            return ResponseEntity
+////                    .badRequest()
+////                    .body(new MessageResponse("Hesabınız aktif değil. Aktivasyon talimatları için lütfen e-postanızı kontrol edin."));
+////        }
+//
+//
+//        return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getId(), userDetails.getUsername(), userDetails.getEmail(),
+////                userDetails.isActive(),
+//                roles));
+//    }
+
+    // BU KODLAR KULLANICI GİRİŞ YAPTIKTAN SONRA OTOMATİK OLARAK BELLİ SÜRE SONUNDA ÇIKIŞ YAPMASI VE MEVCUT TOKEN'IN SİLİNMESİ VE GİRİŞ YAPTIKTAN SONRA YENİ TOKEN OLUŞMASINI SAĞLIYOR
+
+
     @PostMapping("/signin")
-    public Object authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
@@ -75,18 +102,9 @@ public class AuthController {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         List<String> roles = userDetails.getAuthorities().stream().map(item -> item.getAuthority()).collect(Collectors.toList());
 
-
-//        if (!userDetails.isActive()) { // kullanıcı aktif değilse
-//            return ResponseEntity
-//                    .badRequest()
-//                    .body(new MessageResponse("Hesabınız aktif değil. Aktivasyon talimatları için lütfen e-postanızı kontrol edin."));
-//        }
-
-
-        return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getId(), userDetails.getUsername(), userDetails.getEmail(),
-//                userDetails.isActive(),
-                roles));
+        return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getId(), userDetails.getUsername(), userDetails.getEmail(), roles));
     }
+
 
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
@@ -181,20 +199,18 @@ public class AuthController {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
-
-        // Generate a password reset token
 //        String token = UUID.randomUUID().toString();
-//        user.setPasswordResetToken(token);
+//        String shortenedToken = token.substring(0, 1); // Token'ı ilk 8 karakterle temsil ediyoruz
+//        user.setPasswordResetToken(shortenedToken);
 //        userRepository.save(user);
-        // Generate a password reset token
+
         String token = UUID.randomUUID().toString();
-        String shortenedToken = token.substring(0, 1); // Token'ı ilk 8 karakterle temsil ediyoruz
-        user.setPasswordResetToken(shortenedToken);
+        user.setPasswordResetToken(token);
         userRepository.save(user);
 
 
         // Send an email with the password reset link
-        String resetUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + "/api/auth/password/reset/" + shortenedToken;
+        String resetUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + "/api/auth/password/reset/" + token;
         emailService.sendPasswordResetEmail(user.getEmail(), resetUrl);
 //
         // Return a success response
