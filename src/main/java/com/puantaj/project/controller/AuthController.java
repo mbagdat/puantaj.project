@@ -1,19 +1,17 @@
 package com.puantaj.project.controller;
 
 
-import com.puantaj.project.models.ERole;
-import com.puantaj.project.models.Role;
-import com.puantaj.project.models.User;
+import com.puantaj.project.models.*;
 import com.puantaj.project.payload.request.LoginRequest;
 import com.puantaj.project.payload.request.SignupRequest;
 import com.puantaj.project.payload.response.JwtResponse;
 import com.puantaj.project.payload.response.MessageResponse;
+import com.puantaj.project.repositories.PermissionRepository;
 import com.puantaj.project.repositories.RoleRepository;
 import com.puantaj.project.repositories.UserRepository;
 import com.puantaj.project.security.jwt.JwtUtils;
 import com.puantaj.project.security.service.UserDetailsImpl;
 import com.puantaj.project.service.EmailService;
-import com.puantaj.project.service.RoleServiceImpl;
 import com.puantaj.project.service.UserService;
 import com.puantaj.project.tokenexception.InvalidTokenException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -61,11 +59,15 @@ public class AuthController {
     UserService userService;
 
     @Autowired
-    RoleServiceImpl roleService;
+    PermissionRepository permissionRepository;
+
+
+
+    // BU KODLAR KULLANICI GİRİŞ YAPTIKTAN SONRA OTOMATİK OLARAK BELLİ SÜRE SONUNDA ÇIKIŞ YAPMASI VE MEVCUT TOKEN'IN SİLİNMESİ VE GİRİŞ YAPTIKTAN SONRA YENİ TOKEN OLUŞMASINI SAĞLIYOR
 
 
     @PostMapping("/signin")
-    public Object authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
 
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
@@ -75,18 +77,9 @@ public class AuthController {
         UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
         List<String> roles = userDetails.getAuthorities().stream().map(item -> item.getAuthority()).collect(Collectors.toList());
 
-
-//        if (!userDetails.isActive()) { // kullanıcı aktif değilse
-//            return ResponseEntity
-//                    .badRequest()
-//                    .body(new MessageResponse("Hesabınız aktif değil. Aktivasyon talimatları için lütfen e-postanızı kontrol edin."));
-//        }
-
-
-        return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getId(), userDetails.getUsername(), userDetails.getEmail(),
-//                userDetails.isActive(),
-                roles));
+        return ResponseEntity.ok(new JwtResponse(jwt, userDetails.getId(), userDetails.getUsername(), userDetails.getEmail(), roles));
     }
+
 
     @PostMapping("/signup")
     public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
@@ -119,61 +112,27 @@ public class AuthController {
         user.setRoles(roles);
         userService.saveUser(user);
 
+        // Handle permissions
+        Set<EPermission> requestPermissions = signUpRequest.getPermissions();
+        if (requestPermissions != null && !requestPermissions.isEmpty()) {
+            Set<Permission> permissions = new HashSet<>();
+            requestPermissions.forEach(requestPermission -> {
+                Permission permission = permissionRepository.findByName(requestPermission)
+                        .orElseThrow(() -> new RuntimeException("Error: Permission '" + requestPermission + "' is not found."));
+                permissions.add(permission);
+            });
+            user.setPermissions(permissions);
+        }
+
+        userService.saveUser(user);
+
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }
 
 
-    //    @PostMapping("/signup")
-//    public ResponseEntity<?> registerUser(@Valid @RequestBody SignupRequest signUpRequest) {
-//        if (userRepository.existsByUsername(signUpRequest.getUsername())) {
-//            return ResponseEntity
-//                    .badRequest()
-//                    .body(new MessageResponse("Error: Name is already taken!"));
-//        }
-//        if (userRepository.existsByEmail(signUpRequest.getEmail())) {
-//            return ResponseEntity
-//                    .badRequest()
-//                    .body(new MessageResponse("Error: Email is already in use!"));
-//        }
-//
-//        // Create new user's account
-//        User user = new User(signUpRequest.getUsername(), signUpRequest.getEmail(),
-//                passwordEncoder.encode(signUpRequest.getPassword()));
-//
-//        Set<String> strRoles = signUpRequest.getRole();
-//        Set<Role> roles = new HashSet<>();
-//
-//        if (strRoles == null) {
-//            Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-//                    .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-//            roles.add(userRole);
-//        } else {
-//            strRoles.forEach(role -> {
-//                switch (role) {
-//                    case "admin":
-//                        Role adminRole = roleRepository.findByName(ERole.ROLE_ADMIN)
-//                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-//                        roles.add(adminRole);
-//                        break;
-//                    case "mod":
-//                        Role modRole = roleRepository.findByName(ERole.ROLE_MODERATOR)
-//                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-//                        roles.add(modRole);
-//                        break;
-//                    default:
-//                        Role userRole = roleRepository.findByName(ERole.ROLE_USER)
-//                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-//                        roles.add(userRole);
-//                }
-//            });
-//        }
-//
-//        user.setRoles(roles);
-//        userRepository.save(user);
-//
-//        return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
-//    }
-    //FRON-END ÜZERİNDEN DOĞRULAMA LİNKİNİ BU KOD PARÇACIĞI GÖNDERİYOR
+
+    //FRONT-END ÜZERİNDEN DOĞRULAMA LİNKİNİ BU KOD PARÇACIĞI GÖNDERİYOR
+
     @PostMapping("/password/reset")
     public ResponseEntity<String> resetPassword(@RequestParam("email") String email, HttpServletRequest request, HttpServletResponse response) {
         // Check if the user exists
@@ -181,20 +140,18 @@ public class AuthController {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
-
-        // Generate a password reset token
 //        String token = UUID.randomUUID().toString();
-//        user.setPasswordResetToken(token);
+//        String shortenedToken = token.substring(0, 1); // Token'ı ilk 8 karakterle temsil ediyoruz
+//        user.setPasswordResetToken(shortenedToken);
 //        userRepository.save(user);
-        // Generate a password reset token
+
         String token = UUID.randomUUID().toString();
-        String shortenedToken = token.substring(0, 1); // Token'ı ilk 8 karakterle temsil ediyoruz
-        user.setPasswordResetToken(shortenedToken);
+        user.setPasswordResetToken(token);
         userRepository.save(user);
 
 
         // Send an email with the password reset link
-        String resetUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + "/api/auth/password/reset/" + shortenedToken;
+        String resetUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + "/api/auth/password/reset/" + token;
         emailService.sendPasswordResetEmail(user.getEmail(), resetUrl);
 //
         // Return a success response
@@ -202,6 +159,7 @@ public class AuthController {
 
     }
     //POSTMAN ÜZERİNDEN DOĞRULAMA LİNKİNİ BU KOD PARÇACIĞI GÖNDERİYOR
+
 //    @PostMapping("/password/reset")
 //    public ResponseEntity<String> resetPassword(@RequestBody Map<String, String> requestBody, HttpServletRequest request, HttpServletResponse response) {
 //        String email = requestBody.get("email");
@@ -260,55 +218,6 @@ public class AuthController {
         return ResponseEntity.ok("Password reset successful");
     }
 
-    //            YENİ GİRDİĞİN ŞİFREYİ VERİTABANINA KAYDEDİP TOKEN'I SIFIRLLAR
-//    @PostMapping("/password/reset/{token}")
-//    public ResponseEntity<String> resetPassword(@PathVariable("token") String token, @RequestBody Map<String, String> requestBody, HttpServletRequest request, HttpServletResponse response) throws InvalidTokenException {
-//        // Check if the token is valid
-//        User user = userRepository.findByPasswordResetToken(token);
-//        if (user == null) {
-//            throw new InvalidTokenException("Invalid password reset token");
-//        }
-//
-//        // Update the user's password and clear the reset token
-//        String newPassword = passwordEncoder.encode(requestBody.get("password"));
-//        user.setPassword(newPassword);
-//        user.setPasswordResetToken(null);
-//        userRepository.save(user);
-//
-//        // Generate a new JWT token for the user
-//        Authentication authentication = new UsernamePasswordAuthenticationToken(user.getUsername(), newPassword);
-//        SecurityContextHolder.getContext().setAuthentication(authentication);
-//        String jwt = jwtUtils.generateJwtToken(authentication);
-//
-//        // Return a success response
-//        return ResponseEntity.ok("Password reset successful");
-//    }
 
-//    @PostMapping("/password/update")
-//    public ResponseEntity<String> updatePassword(@RequestBody Map<String, String> requestBody) {
-//        String email = requestBody.get("email");
-//        String newPassword = requestBody.get("newPassword");
-//
-//        // Check if the user exists and the token is valid
-//        User user = userRepository.findByEmail(email);
-//        if (user == null) {
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid email or token");
-//        }
-//
-//        // Validate the new password
-//        if (newPassword == null || newPassword.trim().isEmpty()) {
-//            return ResponseEntity.badRequest().body("New password cannot be empty.");
-//        }
-//
-//        String encodedPassword = passwordEncoder.encode(newPassword);
-//
-//        // Reset the password with the new password
-//        user.setPassword(encodedPassword);
-//        user.setPasswordResetToken(null);
-//        userRepository.save(user);
-//
-//        // Return a success response
-//        return ResponseEntity.ok("Password updated successfully for " + email);
-//    }
 
 }

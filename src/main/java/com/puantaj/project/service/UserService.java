@@ -8,7 +8,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class UserService {
-    private final UserRepository userRepository;
+    @Autowired
+     UserRepository userRepository;
 
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
