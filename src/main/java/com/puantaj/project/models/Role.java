@@ -4,6 +4,8 @@ package com.puantaj.project.models;
 import lombok.Data;
 
 import javax.persistence.*;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "roles")
@@ -46,6 +48,7 @@ public class Role {
     public static final String ROLE_USER = "ROLE_USER";
     public static final String ROLE_MODERATOR = "ROLE_MODERATOR";
     public static final String ROLE_ADMIN = "ROLE_ADMIN";
+
 
 }
 

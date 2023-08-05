@@ -1,6 +1,7 @@
 package com.puantaj.project.payload.request;
 
 
+import com.puantaj.project.models.EPermission;
 import com.puantaj.project.models.ERole;
 import lombok.Data;
 
@@ -16,6 +17,7 @@ public class SignupRequest {
     private String password;
     private Set<ERole> roles;
     private String description;
+    private Set<EPermission> permissions;
 
 
 
